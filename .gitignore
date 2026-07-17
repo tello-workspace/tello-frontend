@@ -1,0 +1,25 @@
+# bağımlılıklar
+node_modules/
+
+# next.js build çıktısı
+.next/
+out/
+build/
+
+# ortam değişkenleri — ASLA commit etme
+.env
+.env.local
+.env.*.local
+
+# editör / işletim sistemi
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# loglar & diğer
+*.log
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
