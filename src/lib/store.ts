@@ -1,21 +1,20 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { api } from './api'
+import { authApi } from '@/features/auth/authApi'
 
-// Next.js'te store'u modül seviyesinde tek instance yapmak yerine
-// fabrika fonksiyonuyla üretiyoruz (Redux'un resmi Next.js önerisi):
-// SSR sırasında istekler arası state sızmasını önler.
+// Next.js SSR (Server Side Rendering) için her istekte sıfır store oluşturacak fonksiyon
 export const makeStore = () => {
   return configureStore({
     reducer: {
       [api.reducerPath]: api.reducer,
-      // Feature slice'ları geldikçe buraya eklenecek, örn:
-      // auth: authReducer,
+      [authApi.reducerPath]: authApi.reducer,
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(api.middleware, authApi.middleware),
   })
 }
 
-// Tip yardımcıları
-export type AppStore = ReturnType<typeof makeStore>
-export type RootState = ReturnType<AppStore['getState']>
-export type AppDispatch = AppStore['dispatch']
+// Tip tanımlamaları (StoreProvider veya diğer bileşenlerin hata vermemesi için)
+export type AppStore = ReturnType<typeof makeStore>;
+export type RootState = ReturnType<AppStore['getState']>;
+export type AppDispatch = AppStore['dispatch'];

@@ -1,10 +1,16 @@
+import RegisterForm from '@/features/auth/components/RegisterForm';
+import Link from 'next/link';
+
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-800">Register</h1>
-        <p className="mt-2 text-slate-500">Bu sayfa yakında inşa edilecek.</p>
-      </div>
-    </main>
-  )
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <RegisterForm />
+      <p className="mt-4 text-sm text-gray-600">
+        Zaten hesabın var mı?{' '}
+        <Link href="/login" className="text-indigo-600 hover:underline">
+          Giriş Yap
+        </Link>
+      </p>
+    </div>
+  );
 }
