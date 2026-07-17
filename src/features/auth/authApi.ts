@@ -2,7 +2,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 // Backend .env dosyasındaki NEXT_PUBLIC_API_URL'den beslenecek
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export const authApi = createApi({
   reducerPath: 'authApi',
