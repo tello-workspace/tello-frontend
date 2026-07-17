@@ -1,18 +1,18 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { authApi } from '@/features/auth/authApi'; // authApi yolunuzun doğru olduğundan emin olun
+import { configureStore } from '@reduxjs/toolkit'
+import { api } from './api'
+import { authApi } from '@/features/auth/authApi'
 
 // Next.js SSR (Server Side Rendering) için her istekte sıfır store oluşturacak fonksiyon
 export const makeStore = () => {
   return configureStore({
     reducer: {
-      // 1. authApi reducer'ını buraya ekliyoruz
+      [api.reducerPath]: api.reducer,
       [authApi.reducerPath]: authApi.reducer,
     },
-    // 2. RTK Query middleware entegrasyonu
     middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(authApi.middleware),
-  });
-};
+      getDefaultMiddleware().concat(api.middleware, authApi.middleware),
+  })
+}
 
 // Tip tanımlamaları (StoreProvider veya diğer bileşenlerin hata vermemesi için)
 export type AppStore = ReturnType<typeof makeStore>;
