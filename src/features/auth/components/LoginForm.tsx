@@ -20,13 +20,13 @@ export default function LoginForm() {
     try {
       
       const response = await login({ email, password }).unwrap();
-      
-      if (response?.token) {
-        localStorage.setItem('token', response.token);
+
+      if (response?.data?.token) {
+        localStorage.setItem('token', response.data.token);
         router.push('/projects');
       }
     } catch (err: any) {
-      setErrorMsg(err?.data?.message || 'Giriş yapılırken bir hata oluştu.');
+      setErrorMsg(err?.data?.error || 'Giriş yapılırken bir hata oluştu.');
     }
   };
 

@@ -1,12 +1,10 @@
-// src/features/auth/authApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-
-// Backend .env dosyasındaki NEXT_PUBLIC_API_URL'den beslenecek
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({ baseUrl }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
+  }),
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (credentials) => ({
@@ -15,6 +13,7 @@ export const authApi = createApi({
         body: credentials,
       }),
     }),
+    // Yeni eklenen register mutation:
     register: builder.mutation({
       query: (userData) => ({
         url: '/auth/register',
