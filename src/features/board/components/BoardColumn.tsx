@@ -39,16 +39,16 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   return (
     <div 
       ref={setNodeRef}
-      className={`flex flex-col w-80 shrink-0 bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 border ${
+      className={`flex flex-col w-80 shrink-0 bg-sky-950/40 rounded-xl p-4 border shadow-sm ${
         isLimitExceeded 
-          ? 'border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/10' 
-          : 'border-zinc-200 dark:border-zinc-800'
+          ? 'border-amber-400 bg-amber-50/50' 
+          : 'border-sky-900/60'
       }`}
     >
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm">{title}</h3>
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">
+          <h3 className="font-semibold text-sky-100 text-sm">{title}</h3>
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-sky-900/50 text-sky-200">
             {tasks.length} {wipLimit ? `/ ${wipLimit}` : ''}
           </span>
         </div>
@@ -64,7 +64,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
         ))}
       </div>
 
-      <div className="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+      <div className="mt-3 pt-2 border-t border-sky-900/40">
         {isAdding ? (
           <form onSubmit={handleSubmit} className="flex flex-col gap-2">
             <input
@@ -73,19 +73,19 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
               value={titleInput}
               onChange={(e) => setTitleInput(e.target.value)}
               placeholder="Görev başlığı yazın..."
-              className="w-full text-sm p-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full text-sm p-2 rounded-lg border border-sky-800 bg-sky-950 text-sky-100 placeholder-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-500"
             />
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-3 py-1 text-xs text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded"
+                className="px-3 py-1 text-xs text-sky-300 hover:bg-sky-900/50 rounded"
               >
                 İptal
               </button>
               <button
                 type="submit"
-                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="px-3 py-1 text-xs bg-sky-600 text-white rounded hover:bg-sky-700"
               >
                 Ekle
               </button>
@@ -94,7 +94,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
         ) : (
           <button
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 w-full p-1.5 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition"
+            className="flex items-center gap-1.5 text-xs font-medium text-sky-300 hover:text-white w-full p-1.5 rounded-lg hover:bg-sky-900/40 transition"
           >
             <PlusIcon className="h-4 w-4" />
             Yeni kart ekle

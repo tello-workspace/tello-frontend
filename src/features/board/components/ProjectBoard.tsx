@@ -200,15 +200,58 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
   }
 
   return (
-    // Doğrudan net ve şık koyu mavi tonlarına sahip arka plan
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-white text-zinc-900 p-6 relative overflow-hidden">
+      {/* Özel yavaş hareket eden animasyon ve yukarıdan düşen 3 parça mama (fish/meat chunk veya nokta) */}
+      <style jsx>{`
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(12px); }
+        }
+        @keyframes fallDown1 {
+          0% { transform: translateY(-40px); opacity: 0; }
+          50% { opacity: 1; }
+          100% { transform: translateY(120px); opacity: 0.8; }
+        }
+        @keyframes fallDown2 {
+          0% { transform: translateY(-60px); opacity: 0; }
+          60% { opacity: 1; }
+          100% { transform: translateY(100px); opacity: 0.8; }
+        }
+        @keyframes fallDown3 {
+          0% { transform: translateY(-30px); opacity: 0; }
+          40% { opacity: 1; }
+          100% { transform: translateY(140px); opacity: 0.8; }
+        }
+        .animate-cat-slow {
+          animation: floatSlow 4s ease-in-out infinite;
+        }
+        .animate-fall-1 {
+          animation: fallDown1 3.5s ease-in infinite;
+        }
+        .animate-fall-2 {
+          animation: fallDown2 4.2s ease-in infinite;
+          animation-delay: 1s;
+        }
+        .animate-fall-3 {
+          animation: fallDown3 3.8s ease-in infinite;
+          animation-delay: 2s;
+        }
+      `}</style>
+
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Proje Panosu</h1>
+          <p className="text-sm text-zinc-600">Aktif Proje ID: <span className="font-medium text-blue-600">{projectId}</span></p>
+        </div>
+      </div>
+
       <div className="relative z-10">
         <DndContext 
           sensors={sensors} 
           onDragStart={handleDragStart} 
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-4 overflow-x-auto p-4 h-[calc(100vh-120px)]">
+          <div className="flex gap-4 overflow-x-auto pb-4 h-[calc(100vh-180px)]">
             {Object.values(boardData.columns).map((column) => {
               const columnTasks = column.taskIds
                 .map((taskId) => boardData.tasks[taskId])
@@ -228,6 +271,21 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
             })}
           </div>
         </DndContext>
+
+        {/* Sağ alt köşe: Yavaş hareket eden kedi ve yukarıdan süzülerek düşen 3 parça mama */}
+        <div className="absolute right-10 bottom-6 flex flex-col items-center select-none pointer-events-none z-20">
+          {/* Yukarıdan düşen 3 parça mama */}
+          <div className="relative w-24 h-16 mb-1">
+            <span className="absolute left-2 text-xs animate-fall-1">🐟</span>
+            <span className="absolute left-10 text-xs animate-fall-2">🥩</span>
+            <span className="absolute left-18 text-xs animate-fall-3">🐟</span>
+          </div>
+
+          {/* Hızı yavaşlatılmış kedi figürü */}
+          <div className="text-6xl animate-cat-slow" title="Miyav!">
+            🐱
+          </div>
+        </div>
 
         <TaskModal
           isOpen={isModalOpen}
