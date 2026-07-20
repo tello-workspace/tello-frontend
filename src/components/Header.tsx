@@ -7,6 +7,7 @@ export default function Header(){
 const dispatch = useDispatch();
     const handleLogout = () => {
         localStorage.removeItem('token');
+        dispatch(api.util.resetApiState());
         router.push('/login');
     };
     return (
