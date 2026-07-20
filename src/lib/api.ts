@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import type { BaseQueryApi } from '@reduxjs/toolkit/query'
+import type { BaseQueryApi, FetchArgs } from '@reduxjs/toolkit/query'
 
 const baseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_API_URL,
@@ -12,7 +12,7 @@ const baseQuery = fetchBaseQuery({
   },
 })
 
-const baseQueryWithLogout = async (args: unknown, api: BaseQueryApi, extraOptions: unknown) => {
+const baseQueryWithLogout = async (args: string | FetchArgs, api: BaseQueryApi, extraOptions: {}) => {
   const result = await baseQuery(args, api, extraOptions)
 
   // 401 → token geçersiz/süresi dolmuş → logout + full reload (store sıfırlanır)
