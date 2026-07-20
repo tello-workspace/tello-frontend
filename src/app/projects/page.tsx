@@ -135,9 +135,14 @@ function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: num
             </button>
           ))}
         </div>
-        <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">
-          + Yeni Proje
-        </button>
+       <Link
+  href={`/projects/new?orgId=${activeOrg.id}`}
+  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+>
+  + Yeni Proje
+</Link>
+
+        
       </div>
 
       <ProjectList orgId={activeOrg.id} />
@@ -154,9 +159,7 @@ function ProjectList({ orgId }: { orgId: string }) {
     return (
       <div className="text-center py-12">
         <p className="text-slate-500 mb-4">Henüz proje yok.</p>
-        <button className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm">
-          + İlk Projeyi Oluştur
-        </button>
+        
       </div>
     );
   }

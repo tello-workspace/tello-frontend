@@ -1,9 +1,10 @@
 'use client';
 import { useRouter } from 'next/navigation'
-
+import { useDispatch } from 'react-redux';
+import { api } from '@/lib/api';
 export default function Header(){
     const router = useRouter();
-
+const dispatch = useDispatch();
     const handleLogout = () => {
         localStorage.removeItem('token');
         router.push('/login');
