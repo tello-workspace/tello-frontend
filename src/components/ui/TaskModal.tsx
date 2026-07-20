@@ -31,6 +31,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
   const { data: org } = useGetOrganizationByIdQuery({ orgId }, { skip: !orgId || !isOpen });
   const members = org?.members ?? [];
+  const isAdmin = org?.myRole === 'ADMIN';
 
   useEffect(() => {
     if (taskId && isOpen) {
@@ -174,7 +175,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                             name="assigneeId"
                             value={task.assigneeId || ''}
                             onChange={handleAssigneeChange}
-                            className="w-full text-sm p-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            disabled={!isAdmin}
+                            title={isAdmin ? undefined : 'Sadece adminler atama yapabilir'}
+                            className="w-full text-sm p-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
                           >
                             <option value="">Atanan Yok</option>
                             {members.map((m) => (
@@ -183,6 +186,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                               </option>
                             ))}
                           </select>
+                          {!isAdmin && (
+                            <p className="text-xs text-zinc-400 mt-1">Sadece adminler atama yapabilir</p>
+                          )}
                         </div>
                       </div>
                       
