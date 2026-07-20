@@ -1,6 +1,14 @@
 'use client';
 
-import { useGetMyOrganizationsQuery, useAddMemberMutation } from '@/features/organizations/organizationsApi';
+import {
+  useGetMyOrganizationsQuery,
+  useAddMemberMutation,
+  useGetOrganizationByIdQuery,
+  useUpdateOrganizationMutation,
+  useDeleteOrganizationMutation,
+  useRemoveMemberMutation,
+} from '@/features/organizations/organizationsApi';
+import { useGetMeQuery } from '@/features/auth/meApi';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -113,7 +121,7 @@ export default function ProjectsPage() {
   );
 }
 
-function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: number }[] }) {
+function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: number; role: 'ADMIN' | 'MEMBER' }[] }) {
   const [activeOrgId, setActiveOrgId] = useState(orgs[0]?.id);
   const activeOrg = orgs.find((o) => o.id === activeOrgId) || orgs[0];
 
@@ -121,6 +129,7 @@ function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: num
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteMsg, setInviteMsg] = useState('');
   const [addMember, { isLoading: isInviting }] = useAddMemberMutation();
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,7 +170,18 @@ function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: num
             className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-md hover:bg-indigo-50 text-sm"
           >
             + Üye Davet Et
+            
           </button>
+                    {activeOrg.role === 'ADMIN' && (
+            <button
+              onClick={() => setShowSettings((v) => !v)}
+              className="px-4 py-2 border border-slate-300 text-slate-600 rounded-md hover:bg-slate-50 text-sm"
+            >
+              ⚙ Ayarlar
+            </button>
+          )}
+
+
           <Link
             href={`/projects/new?orgId=${activeOrg.id}`}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
@@ -193,6 +213,8 @@ function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: num
           </button>
         </form>
       )}
+            {showSettings && <OrgSettingsPanel orgId={activeOrg.id} />}
+
 
       <ProjectList orgId={activeOrg.id} />
     </>
@@ -230,6 +252,125 @@ function ProjectList({ orgId }: { orgId: string }) {
     </div>
   );
 }
+function OrgSettingsPanel({ orgId }: { orgId: string }) {
+  const { data: me } = useGetMeQuery();
+  const { data: org } = useGetOrganizationByIdQuery({ orgId });
+
+  const [editingName, setEditingName] = useState(false);
+  const [name, setName] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const [updateOrganization, { isLoading: isSaving }] = useUpdateOrganizationMutation();
+  const [deleteOrganization, { isLoading: isDeleting }] = useDeleteOrganizationMutation();
+  const [removeMember, { isLoading: isRemoving }] = useRemoveMemberMutation();
+
+  if (!org) return <p className="mb-6 text-sm text-slate-500">Yükleniyor...</p>;
+
+  const isOwner = me?.id === org.ownerId;
+
+  const startEditing = () => {
+    setName(org.name);
+    setEditingName(true);
+  };
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    try {
+      await updateOrganization({ orgId, name: name.trim() }).unwrap();
+      setEditingName(false);
+    } catch (err: any) {
+      const errData = err?.data?.error;
+      setMsg(typeof errData === 'string' ? errData : errData?.message || 'Güncellenemedi.');
+    }
+  };
+
+  const handleDeleteOrg = async () => {
+    if (!confirm('Bu organizasyonu silmek istediğine emin misin? Tüm projeler de silinecek. Bu işlem geri alınamaz.')) return;
+    try {
+      await deleteOrganization({ orgId }).unwrap();
+      window.location.href = '/projects';
+    } catch (err: any) {
+      const errData = err?.data?.error;
+      alert(typeof errData === 'string' ? errData : errData?.message || 'Silinemedi.');
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!confirm('Bu üyeyi organizasyondan çıkarmak istediğine emin misin?')) return;
+    try {
+      await removeMember({ orgId, userId }).unwrap();
+    } catch (err: any) {
+      const errData = err?.data?.error;
+      alert(typeof errData === 'string' ? errData : errData?.message || 'Çıkarılamadı.');
+    }
+  };
+
+  return (
+    <div className="mb-6 p-4 border border-slate-200 rounded-lg bg-slate-50">
+      <div className="mb-4">
+        {editingName ? (
+          <form onSubmit={handleRename} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="px-3 py-1.5 border rounded-md text-sm text-slate-900"
+              autoFocus
+            />
+            <button type="submit" disabled={isSaving} className="text-sm text-indigo-600 hover:underline">
+              Kaydet
+            </button>
+            <button type="button" onClick={() => setEditingName(false)} className="text-sm text-slate-500 hover:underline">
+              İptal
+            </button>
+          </form>
+        ) : (
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-slate-800">{org.name}</h3>
+            <button onClick={startEditing} className="text-xs text-indigo-600 hover:underline">
+              Yeniden Adlandır
+            </button>
+          </div>
+        )}
+        {msg && <p className="text-xs text-red-500 mt-1">{msg}</p>}
+      </div>
+
+      <div className="mb-4">
+        <h4 className="text-sm font-medium text-slate-600 mb-2">Üyeler</h4>
+        <ul className="space-y-1">
+          {org.members.map((m) => (
+            <li key={m.userId} className="flex items-center justify-between text-sm">
+              <span className="text-slate-700">
+                {m.user.name} <span className="text-slate-400">({m.role === 'ADMIN' ? 'Admin' : 'Üye'})</span>
+              </span>
+              {isOwner && m.userId !== org.ownerId && (
+                <button
+                  onClick={() => handleRemoveMember(m.userId)}
+                  disabled={isRemoving}
+                  className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                >
+                  Çıkar
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {isOwner && (
+        <button
+          onClick={handleDeleteOrg}
+          disabled={isDeleting}
+          className="text-sm text-red-600 hover:underline disabled:opacity-50"
+        >
+          Organizasyonu Sil
+        </button>
+      )}
+    </div>
+  );
+}
+
 
 // Hook'u projenin kendi api'sinden import et
 import { useGetProjectsQuery } from '@/features/projects/projectsApi';
