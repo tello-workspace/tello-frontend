@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCreateProjectMutation } from '@/features/projects/projectsApi';
+import { toast } from 'react-toastify';
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function NewProjectPage() {
 
     try {
       const project = await createProject({ orgId, name, description: description || undefined }).unwrap();
+      toast.success('Proje oluşturuldu!');
       router.push(`/projects/${project.id}`);
     } catch (err: any) {
       const errData = err?.data?.error;

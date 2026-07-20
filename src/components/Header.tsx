@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useDispatch } from 'react-redux';
 import { api } from '@/lib/api';
 import { useGetMeQuery } from '@/features/auth/meApi';
+import { toast } from 'react-toastify';
 
 export default function Header(){
     const router = useRouter();
@@ -13,6 +14,7 @@ export default function Header(){
     const handleLogout = () => {
         localStorage.removeItem('token');
         dispatch(api.util.resetApiState());
+        toast.success('Çıkış yapıldı');
         router.push('/login');
     };
     return (

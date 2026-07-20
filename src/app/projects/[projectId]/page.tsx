@@ -8,6 +8,7 @@ import {
   useUpdateProjectMutation,
   useDeleteProjectMutation,
 } from '@/features/projects/projectsApi';
+import { toast } from 'react-toastify';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -35,6 +36,7 @@ export default function ProjectDetailPage() {
     if (!orgId || !name.trim()) return;
     try {
       await updateProject({ orgId, projectId, name: name.trim() }).unwrap();
+      toast.success('Proje yeniden adlandırıldı');
       setIsEditing(false);
     } catch (err: any) {
       const errData = err?.data?.error;
@@ -47,6 +49,7 @@ export default function ProjectDetailPage() {
     if (!confirm('Bu projeyi silmek istediğine emin misin? Bu işlem geri alınamaz.')) return;
     try {
       await deleteProject({ orgId, projectId }).unwrap();
+      toast.success('Proje silindi');
       router.push('/projects');
     } catch (err: any) {
       const errData = err?.data?.error;

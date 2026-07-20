@@ -11,6 +11,7 @@ import {
 import { useGetMeQuery } from '@/features/auth/meApi';
 import Link from 'next/link';
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 
 export default function ProjectsPage() {
   const { data: orgs, isLoading, error } = useGetMyOrganizationsQuery();
@@ -136,6 +137,7 @@ function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: num
     setInviteMsg('');
     try {
       await addMember({ orgId: activeOrg.id, email: inviteEmail }).unwrap();
+      toast.success('Davetiye gönderildi!');
       setInviteMsg('Davet edildi!');
       setInviteEmail('');
       setTimeout(() => setShowInvite(false), 1200);
@@ -278,6 +280,7 @@ function OrgSettingsPanel({ orgId }: { orgId: string }) {
     if (!name.trim()) return;
     try {
       await updateOrganization({ orgId, name: name.trim() }).unwrap();
+      toast.success('Organizasyon güncellendi');
       setEditingName(false);
     } catch (err: any) {
       const errData = err?.data?.error;
@@ -300,6 +303,7 @@ function OrgSettingsPanel({ orgId }: { orgId: string }) {
     if (!confirm('Bu üyeyi organizasyondan çıkarmak istediğine emin misin?')) return;
     try {
       await removeMember({ orgId, userId }).unwrap();
+      toast.success('Üye çıkarıldı');
     } catch (err: any) {
       const errData = err?.data?.error;
       alert(typeof errData === 'string' ? errData : errData?.message || 'Çıkarılamadı.');

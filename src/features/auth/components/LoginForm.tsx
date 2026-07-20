@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useLoginMutation } from '../authApi';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 interface ApiError {
   data?: {
@@ -38,6 +39,7 @@ export default function LoginForm() {
       const token = resp.data?.token ?? resp.token;
       if (token) {
         localStorage.setItem('token', token);
+        toast.success('Giriş yapıldı!');
         router.push('/projects');
       } else {
         setErrorMsg('Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.');
