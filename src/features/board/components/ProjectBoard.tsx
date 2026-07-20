@@ -28,9 +28,10 @@ interface BoardData {
 
 interface ProjectBoardProps {
   projectId: string;
+  organizationId?: string;
 }
 
-export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
+export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId, organizationId }) => {
   const [boardData, setBoardData] = useState<BoardData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [, setActiveId] = useState<string | null>(null);
@@ -45,10 +46,28 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
   );
 
   useEffect(() => {
+    let isMounted = true;
+
     boardService.getBoardData(projectId)
-      .then((data) => setBoardData(data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+      .then((data: BoardData) => {
+        if (isMounted) {
+          setBoardData(data);
+        }
+      })
+      .catch((err: unknown) => {
+        if (isMounted) {
+          console.error(err);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [projectId]);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -201,7 +220,6 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 p-6 relative overflow-hidden">
-      {/* Özel yavaş hareket eden animasyon ve yukarıdan düşen 3 parça mama (fish/meat chunk veya nokta) */}
       <style jsx>{`
         @keyframes floatSlow {
           0%, 100% { transform: translateY(0px); }
@@ -272,16 +290,13 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
           </div>
         </DndContext>
 
-        {/* Sağ alt köşe: Yavaş hareket eden kedi ve yukarıdan süzülerek düşen 3 parça mama */}
         <div className="absolute right-10 bottom-6 flex flex-col items-center select-none pointer-events-none z-20">
-          {/* Yukarıdan düşen 3 parça mama */}
           <div className="relative w-24 h-16 mb-1">
             <span className="absolute left-2 text-xs animate-fall-1">🐟</span>
             <span className="absolute left-10 text-xs animate-fall-2">🥩</span>
             <span className="absolute left-18 text-xs animate-fall-3">🐟</span>
           </div>
 
-          {/* Hızı yavaşlatılmış kedi figürü */}
           <div className="text-6xl animate-cat-slow" title="Miyav!">
             🐱
           </div>
@@ -294,6 +309,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
           fetchTaskDetails={(id) => boardService.getTaskDetails(projectId, id)}
           onUpdateTask={handleUpdateTask}
           onDeleteTask={handleDeleteTask}
+          organizationId={organizationId}
         />
       </div>
     </div>

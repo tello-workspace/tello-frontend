@@ -1,9 +1,11 @@
 // src/features/board/components/BoardColumn.tsx
+'use client';
+
 import React, { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { BoardCard } from './BoardCard';
-import { Task } from '../services/boardService';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { Task } from '@/features/board/services/boardService';
+import { Plus } from 'lucide-react';
 
 interface BoardColumnProps {
   id: string;
@@ -96,7 +98,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-1.5 text-xs font-medium text-sky-300 hover:text-white w-full p-1.5 rounded-lg hover:bg-sky-900/40 transition"
           >
-            <PlusIcon className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Yeni kart ekle
           </button>
         )}
