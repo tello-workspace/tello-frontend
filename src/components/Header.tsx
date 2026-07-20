@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { api } from '@/lib/api';
 import { useGetMeQuery } from '@/features/auth/meApi';
 import { toast } from 'react-toastify';
+import NotificationBell from './NotificationBell';
 
 export default function Header(){
     const router = useRouter();
@@ -22,11 +23,14 @@ export default function Header(){
             <Link href="/projects" className="text-lg font-bold text-slate-800 hover:text-indigo-600 transition">
               {me ? `Hoşgeldin, ${me.name}` : 'Tello'}
             </Link>
-            <button
-            onClick={handleLogout}
-                className="text-sm font-medium text-red-600 hover:text-red-700"
-                >Çıkıs yap
-                </button>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <button
+              onClick={handleLogout}
+                  className="text-sm font-medium text-red-600 hover:text-red-700"
+                  >Çıkıs yap
+                  </button>
+            </div>
         </header>
     );
 }
