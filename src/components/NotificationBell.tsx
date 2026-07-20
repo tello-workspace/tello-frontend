@@ -8,6 +8,11 @@ import {
   useMarkAsReadMutation,
   useMarkAllAsReadMutation,
 } from '@/features/notifications/notificationsApi';
+import {
+  useAcceptInvitationMutation,
+  useDeclineInvitationMutation,
+} from '@/features/organizations/organizationsApi';
+import { toast } from 'react-toastify';
 
 function timeAgo(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -25,6 +30,28 @@ export default function NotificationBell() {
   const { data: notifications = [] } = useGetNotificationsQuery();
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
+  const [acceptInvitation] = useAcceptInvitationMutation();
+  const [declineInvitation] = useDeclineInvitationMutation();
+
+  const handleAccept = async (e: React.MouseEvent, invitationId: string) => {
+    e.stopPropagation();
+    try {
+      await acceptInvitation(invitationId).unwrap();
+      toast.success('Davet kabul edildi!');
+    } catch {
+      toast.error('Davet kabul edilemedi.');
+    }
+  };
+
+  const handleDecline = async (e: React.MouseEvent, invitationId: string) => {
+    e.stopPropagation();
+    try {
+      await declineInvitation(invitationId).unwrap();
+      toast.success('Davet reddedildi.');
+    } catch {
+      toast.error('Davet reddedilemedi.');
+    }
+  };
 
   return (
     <Popover className="relative">
@@ -64,9 +91,32 @@ export default function NotificationBell() {
               >
                 <div className="flex items-start gap-2">
                   {!n.read && <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
-                  <div>
+                  <div className="flex-1">
                     <p className={n.read ? '' : 'font-medium'}>{n.message}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{timeAgo(n.createdAt)}</p>
+
+                    {n.type === 'ORG_INVITE' && n.invitation?.status === 'PENDING' && (
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={(e) => handleAccept(e, n.invitation!.id)}
+                          className="px-2.5 py-1 text-xs font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                        >
+                          Kabul Et
+                        </button>
+                        <button
+                          onClick={(e) => handleDecline(e, n.invitation!.id)}
+                          className="px-2.5 py-1 text-xs font-medium text-slate-600 border border-slate-300 rounded hover:bg-slate-100"
+                        >
+                          Reddet
+                        </button>
+                      </div>
+                    )}
+                    {n.type === 'ORG_INVITE' && n.invitation?.status === 'ACCEPTED' && (
+                      <p className="text-xs text-green-600 mt-1">Kabul edildi</p>
+                    )}
+                    {n.type === 'ORG_INVITE' && n.invitation?.status === 'DECLINED' && (
+                      <p className="text-xs text-slate-400 mt-1">Reddedildi</p>
+                    )}
                   </div>
                 </div>
               </li>

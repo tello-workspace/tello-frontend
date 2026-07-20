@@ -9,6 +9,7 @@ export interface Notification {
   read: boolean;
   createdAt: string;
   card: { id: string; title: string } | null;
+  invitation: { id: string; status: 'PENDING' | 'ACCEPTED' | 'DECLINED' } | null;
 }
 
 interface ApiEnvelope<T> {

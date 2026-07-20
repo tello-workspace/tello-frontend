@@ -70,7 +70,20 @@ export const organizationsApi = api.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { orgId }) => [{ type: 'Project', id: orgId }],
     }),
-
+    acceptInvitation: builder.mutation<void, string>({
+      query: (invitationId) => ({
+        url: `/invitations/${invitationId}/accept`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Project', 'Notification'],
+    }),
+    declineInvitation: builder.mutation<void, string>({
+      query: (invitationId) => ({
+        url: `/invitations/${invitationId}/decline`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Notification'],
+    }),
   }),
 });
 
@@ -81,4 +94,6 @@ export const {
   useUpdateOrganizationMutation,
   useDeleteOrganizationMutation,
   useRemoveMemberMutation,
+  useAcceptInvitationMutation,
+  useDeclineInvitationMutation,
 } = organizationsApi;
