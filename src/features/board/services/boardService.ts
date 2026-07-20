@@ -22,6 +22,7 @@ export interface Task {
   description?: string;
   dueDate?: string;
   columnId: string;
+  assigneeId?: string | null;
   assignee?: string | null;
   assigneeAvatar?: string | null;
 }
@@ -97,15 +98,21 @@ export const boardService = {
   },
 
   async updateTask(projectId: string, task: Task): Promise<Task> {
+    const body: Record<string, unknown> = {
+      title: task.title,
+      description: task.description,
+      dueDate: task.dueDate || null,
+      columnId: task.columnId,
+    };
+    // assigneeId varsa backend'e gönder, boş string ise null yap (atamayı kaldır)
+    if (task.assigneeId !== undefined) {
+      body.assigneeId = task.assigneeId || null;
+    }
+
     const res = await fetch(`${API_BASE_URL}/cards/${task.id}`, {
       method: 'PATCH',
       headers: getAuthHeaders(),
-      body: JSON.stringify({
-        title: task.title,
-        description: task.description,
-        dueDate: task.dueDate || null,
-        columnId: task.columnId,
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error('Görev güncellenemedi.');
     const json = await res.json();
