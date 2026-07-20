@@ -7,7 +7,10 @@ import { useRouter } from 'next/navigation';
 
 interface ApiError {
   data?: {
-    error?: string;
+    error?: {
+      code: string;
+      message: string;
+    };
   };
 }
 
@@ -41,7 +44,8 @@ export default function LoginForm() {
       }
     } catch (err) {
       const apiError = err as ApiError;
-      setErrorMsg(apiError?.data?.error || 'Giriş yapılırken bir hata oluştu.');
+      const errData = apiError?.data?.error;
+      setErrorMsg(typeof errData === 'string' ? errData : errData?.message || 'Giriş yapılırken bir hata oluştu.');
     }
   };
 

@@ -31,7 +31,8 @@ export default function RegisterForm() {
       alert('Kayıt başarıyla tamamlandı! Giriş sayfasına yönlendiriliyorsunuz.');
       router.push('/login');
     } catch (err: any) {
-      setErrorMsg(err?.data?.error || 'Kayıt sırasında bir hata oluştu.');
+      const errData = err?.data?.error;
+      setErrorMsg(typeof errData === 'string' ? errData : errData?.message || 'Kayıt sırasında bir hata oluştu.');
     }
   };
 

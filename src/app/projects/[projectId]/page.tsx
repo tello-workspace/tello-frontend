@@ -1,11 +1,12 @@
-// Board tamamen etkileşimli olacağı (dnd, Redux) için asıl bileşen
-// features/board altında "use client" olarak yaşayacak; bu dosya sadece bağlayacak.
-export default async function BoardPage({
-  params,
-}: {
-  params: Promise<{ projectId: string }>
-}) {
-  const { projectId } = await params
+'use client';
+
+import { useParams } from 'next/navigation';
+import { useGetProjectsQuery } from '@/features/projects/projectsApi';
+
+export default function BoardPage() {
+  const params = useParams();
+  const projectId = params?.projectId as string;
+
   return (
     <main className="flex min-h-screen items-center justify-center">
       <div className="text-center">
@@ -15,5 +16,5 @@ export default async function BoardPage({
         </p>
       </div>
     </main>
-  )
+  );
 }
