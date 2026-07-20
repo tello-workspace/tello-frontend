@@ -200,41 +200,44 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
   }
 
   return (
-    <>
-      <DndContext 
-        sensors={sensors} 
-        onDragStart={handleDragStart} 
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex gap-4 overflow-x-auto p-4 h-[calc(100vh-120px)]">
-          {Object.values(boardData.columns).map((column) => {
-            const columnTasks = column.taskIds
-              .map((taskId) => boardData.tasks[taskId])
-              .filter((task): task is Task => task !== undefined);
+    // Doğrudan net ve şık koyu mavi tonlarına sahip arka plan
+    <div className="min-h-screen bg-slate-950 text-white">
+      <div className="relative z-10">
+        <DndContext 
+          sensors={sensors} 
+          onDragStart={handleDragStart} 
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-4 overflow-x-auto p-4 h-[calc(100vh-120px)]">
+            {Object.values(boardData.columns).map((column) => {
+              const columnTasks = column.taskIds
+                .map((taskId) => boardData.tasks[taskId])
+                .filter((task): task is Task => task !== undefined);
 
-            return (
-              <BoardColumn
-                key={column.id}
-                id={column.id}
-                title={column.title}
-                tasks={columnTasks}
-                wipLimit={column.wipLimit}
-                onAddTask={handleAddTask}
-                onTaskClick={handleTaskClick}
-              />
-            );
-          })}
-        </div>
-      </DndContext>
+              return (
+                <BoardColumn
+                  key={column.id}
+                  id={column.id}
+                  title={column.title}
+                  tasks={columnTasks}
+                  wipLimit={column.wipLimit}
+                  onAddTask={handleAddTask}
+                  onTaskClick={handleTaskClick}
+                />
+              );
+            })}
+          </div>
+        </DndContext>
 
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        taskId={selectedTaskId}
-        fetchTaskDetails={(id) => boardService.getTaskDetails(projectId, id)}
-        onUpdateTask={handleUpdateTask}
-        onDeleteTask={handleDeleteTask}
-      />
-    </>
+        <TaskModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          taskId={selectedTaskId}
+          fetchTaskDetails={(id) => boardService.getTaskDetails(projectId, id)}
+          onUpdateTask={handleUpdateTask}
+          onDeleteTask={handleDeleteTask}
+        />
+      </div>
+    </div>
   );
 };
