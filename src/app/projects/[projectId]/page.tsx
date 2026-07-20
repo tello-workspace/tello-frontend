@@ -1,19 +1,29 @@
 'use client';
 
+import React from 'react';
 import { useParams } from 'next/navigation';
-import { useGetProjectsQuery } from '@/features/projects/projectsApi';
+import { ProjectBoard } from '@/features/board/components/ProjectBoard';
 
-export default function BoardPage() {
+export default function ProjectDetailPage() {
   const params = useParams();
-  const projectId = params?.projectId as string;
+
+  // URL'deki [projectId] dinamik parametresini güvenli bir şekilde alıyoruz
+  const projectId = (params?.projectId as string) || 'default-project';
 
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-800">Board</h1>
-        <p className="mt-2 text-slate-500">
-          Proje: <code className="rounded bg-slate-200 px-1">{projectId}</code> — yakında inşa edilecek.
-        </p>
+    <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            Proje Panosu
+          </h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Aktif Proje ID: <span className="font-mono text-blue-500">{projectId}</span>
+          </p>
+        </div>
+
+        {/* Kanban Board Bileşeni */}
+        <ProjectBoard projectId={projectId} />
       </div>
     </main>
   );
