@@ -8,6 +8,7 @@ import {
   useUpdateProjectMutation,
   useDeleteProjectMutation,
 } from '@/features/projects/projectsApi';
+import { useGetOrganizationByIdQuery } from '@/features/organizations/organizationsApi';
 import { toast } from 'react-toastify';
 
 export default function ProjectDetailPage() {
@@ -18,6 +19,8 @@ export default function ProjectDetailPage() {
   const orgId = searchParams.get('orgId') ?? '';
 
   const { data: project } = useGetProjectByIdQuery({ orgId, projectId }, { skip: !orgId });
+  const { data: org } = useGetOrganizationByIdQuery({ orgId }, { skip: !orgId });
+  const isAdmin = org?.myRole === 'ADMIN';
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
@@ -86,7 +89,7 @@ export default function ProjectDetailPage() {
             {errorMsg && <p className="text-xs text-red-500 mt-1">{errorMsg}</p>}
           </div>
 
-          {orgId && !isEditing && (
+          {orgId && isAdmin && !isEditing && (
             <div className="flex gap-2">
               <button
                 onClick={startEditing}
@@ -105,7 +108,7 @@ export default function ProjectDetailPage() {
           )}
         </div>
 
-        <ProjectBoard projectId={projectId} />
+        <ProjectBoard projectId={projectId} orgId={orgId} />
       </div>
     </main>
   );

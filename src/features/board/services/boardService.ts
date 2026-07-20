@@ -27,6 +27,34 @@ export interface Task {
   assigneeAvatar?: string | null;
 }
 
+// Backend /cards/:id (GET, PATCH) assignee'yi obje olarak dondurur
+// ({id, name, email}) — board endpoint'i ise duz string. Task tipini
+// tek tip (string) tutmak icin burada normalize ediyoruz.
+interface RawCard {
+  id: string;
+  title: string;
+  description?: string | null;
+  dueDate?: string | null;
+  columnId: string;
+  assigneeId?: string | null;
+  assignee?: { id: string; name: string; email: string } | null;
+}
+
+function normalizeCard(raw: RawCard): Task {
+  return {
+    id: raw.id,
+    title: raw.title,
+    description: raw.description ?? undefined,
+    dueDate: raw.dueDate ?? undefined,
+    columnId: raw.columnId,
+    assigneeId: raw.assigneeId ?? null,
+    assignee: raw.assignee?.name ?? null,
+    assigneeAvatar: raw.assignee?.name
+      ? raw.assignee.name.split(' ').map((n) => n[0]).join('').toUpperCase()
+      : null,
+  };
+}
+
 export interface Column {
   id: string;
   title: string;
@@ -94,7 +122,8 @@ export const boardService = {
     });
     if (!res.ok) throw new Error('Görev detayları yüklenemedi.');
     const json = await res.json();
-    return extractData(json);
+    const raw = extractData<RawCard>(json);
+    return normalizeCard(raw);
   },
 
   async updateTask(projectId: string, task: Task): Promise<Task> {
@@ -116,7 +145,8 @@ export const boardService = {
     });
     if (!res.ok) throw new Error('Görev güncellenemedi.');
     const json = await res.json();
-    return extractData(json);
+    const raw = extractData<RawCard>(json);
+    return normalizeCard(raw);
   },
 
   async deleteTask(projectId: string, taskId: string): Promise<void> {

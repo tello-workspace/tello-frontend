@@ -10,6 +10,7 @@ interface BoardColumnProps {
   title: string;
   tasks: Task[];
   wipLimit?: number | null;
+  canAddTask: boolean;
   onAddTask: (columnId: string, title: string) => void;
   onTaskClick: (taskId: string) => void;
 }
@@ -19,6 +20,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   title,
   tasks,
   wipLimit,
+  canAddTask,
   onAddTask,
   onTaskClick,
 }) => {
@@ -64,6 +66,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
         ))}
       </div>
 
+      {canAddTask && (
       <div className="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
         {isAdding ? (
           <form onSubmit={handleSubmit} className="flex flex-col gap-2">
@@ -101,6 +104,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
           </button>
         )}
       </div>
+      )}
     </div>
   );
 };

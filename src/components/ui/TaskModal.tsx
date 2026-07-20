@@ -5,11 +5,13 @@ import React, { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Task } from '@/features/board/services/boardService';
+import { useGetOrganizationByIdQuery } from '@/features/organizations/organizationsApi';
 
 interface TaskModalProps {
   taskId: string | null;
   isOpen: boolean;
   onClose: () => void;
+  orgId: string;
   onUpdateTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
   fetchTaskDetails: (taskId: string) => Promise<Task>;
@@ -19,12 +21,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   taskId,
   isOpen,
   onClose,
+  orgId,
   onUpdateTask,
   onDeleteTask,
   fetchTaskDetails,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const { data: org } = useGetOrganizationByIdQuery({ orgId }, { skip: !orgId || !isOpen });
+  const members = org?.members ?? [];
 
   useEffect(() => {
     if (taskId && isOpen) {
@@ -41,13 +47,23 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (!task) return;
     const { name, value } = e.target;
+    setTask({ ...task, [name]: value });
+  };
 
-    if (name === 'assignee') {
-      const avatar = value ? value.split(' ').map(n => n[0]).join('').toUpperCase() : '';
-      setTask({ ...task, assignee: value, assigneeAvatar: avatar });
-    } else {
-      setTask({ ...task, [name]: value });
-    }
+  const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!task) return;
+    const userId = e.target.value;
+    const member = members.find((m) => m.userId === userId);
+    const displayName = member?.user.name ?? '';
+    const avatar = displayName
+      ? displayName.split(' ').map((n) => n[0]).join('').toUpperCase()
+      : '';
+    setTask({
+      ...task,
+      assigneeId: userId || null,
+      assignee: displayName,
+      assigneeAvatar: avatar,
+    });
   };
 
   const handleSave = () => {
@@ -155,15 +171,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                           </label>
                           <select
                             id="assignee"
-                            name="assignee"
-                            value={task.assignee || ''}
-                            onChange={handleChange}
+                            name="assigneeId"
+                            value={task.assigneeId || ''}
+                            onChange={handleAssigneeChange}
                             className="w-full text-sm p-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
                             <option value="">Atanan Yok</option>
-                            <option value="Ahmet Y.">Ahmet Y.</option>
-                            <option value="Zeynep K.">Zeynep K.</option>
-                            <option value="Mehmet D.">Mehmet D.</option>
+                            {members.map((m) => (
+                              <option key={m.userId} value={m.userId}>
+                                {m.user.name}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>

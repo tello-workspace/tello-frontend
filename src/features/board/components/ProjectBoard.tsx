@@ -13,15 +13,21 @@ import {
 import { BoardColumn } from './BoardColumn';
 import { boardService, Task, BoardData } from '../services/boardService';
 import { TaskModal } from '@/components/ui/TaskModal';
+import { useGetOrganizationByIdQuery } from '@/features/organizations/organizationsApi';
 
 interface ProjectBoardProps {
   projectId: string;
+  orgId: string;
 }
 
-export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
+export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId, orgId }) => {
   const [boardData, setBoardData] = useState<BoardData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [, setActiveId] = useState<string | null>(null);
+
+  // Kart ekleme sadece ADMIN'e acik; suruklemeyi (kart tasima) herkes yapabilir
+  const { data: org } = useGetOrganizationByIdQuery({ orgId }, { skip: !orgId });
+  const canAddTask = org?.myRole === 'ADMIN';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -208,6 +214,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
                 title={column.title}
                 tasks={columnTasks}
                 wipLimit={column.wipLimit}
+                canAddTask={!!canAddTask}
                 onAddTask={handleAddTask}
                 onTaskClick={handleTaskClick}
               />
@@ -220,6 +227,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         taskId={selectedTaskId}
+        orgId={orgId}
         fetchTaskDetails={(id) => boardService.getTaskDetails(projectId, id)}
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
