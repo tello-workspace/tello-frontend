@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRegisterMutation } from '../authApi';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 export default function RegisterForm() {
   const [name, setName] = useState('');
@@ -28,10 +29,11 @@ export default function RegisterForm() {
       // Backend api/auth/register endpoint'ine istek gönderiyoruz
       const response = await registerUser({ name, email, password }).unwrap();
       
-      alert('Kayıt başarıyla tamamlandı! Giriş sayfasına yönlendiriliyorsunuz.');
+      toast.success('Kayıt başarıyla tamamlandı! Giriş sayfasına yönlendiriliyorsunuz.');
       router.push('/login');
     } catch (err: any) {
-      setErrorMsg(err?.data?.error || 'Kayıt sırasında bir hata oluştu.');
+      const errData = err?.data?.error;
+      setErrorMsg(typeof errData === 'string' ? errData : errData?.message || 'Kayıt sırasında bir hata oluştu.');
     }
   };
 
