@@ -1,28 +1,107 @@
 'use client';
 
-import React from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState } from 'react';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { ProjectBoard } from '@/features/board/components/ProjectBoard';
+import {
+  useGetProjectByIdQuery,
+  useUpdateProjectMutation,
+  useDeleteProjectMutation,
+} from '@/features/projects/projectsApi';
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const projectId = params?.projectId as string;
+  const orgId = searchParams.get('orgId') ?? '';
 
-  // URL'deki [projectId] dinamik parametresini güvenli bir şekilde alıyoruz
-  const projectId = (params?.projectId as string) || 'default-project';
+  const { data: project } = useGetProjectByIdQuery({ orgId, projectId }, { skip: !orgId });
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
+  const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
+
+  const startEditing = () => {
+    setName(project?.name ?? '');
+    setIsEditing(true);
+  };
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orgId || !name.trim()) return;
+    try {
+      await updateProject({ orgId, projectId, name: name.trim() }).unwrap();
+      setIsEditing(false);
+    } catch (err: any) {
+      const errData = err?.data?.error;
+      setErrorMsg(typeof errData === 'string' ? errData : errData?.message || 'Güncellenemedi.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!orgId) return;
+    if (!confirm('Bu projeyi silmek istediğine emin misin? Bu işlem geri alınamaz.')) return;
+    try {
+      await deleteProject({ orgId, projectId }).unwrap();
+      router.push('/projects');
+    } catch (err: any) {
+      const errData = err?.data?.error;
+      alert(typeof errData === 'string' ? errData : errData?.message || 'Silinemedi.');
+    }
+  };
 
   return (
     <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            Proje Panosu
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Aktif Proje ID: <span className="font-mono text-blue-500">{projectId}</span>
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            {isEditing ? (
+              <form onSubmit={handleRename} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1"
+                  autoFocus
+                />
+                <button type="submit" disabled={isUpdating} className="text-sm text-blue-600 hover:underline">
+                  Kaydet
+                </button>
+                <button type="button" onClick={() => setIsEditing(false)} className="text-sm text-zinc-500 hover:underline">
+                  İptal
+                </button>
+              </form>
+            ) : (
+              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                {project?.name ?? 'Proje Panosu'}
+              </h1>
+            )}
+            {errorMsg && <p className="text-xs text-red-500 mt-1">{errorMsg}</p>}
+          </div>
+
+          {orgId && !isEditing && (
+            <div className="flex gap-2">
+              <button
+                onClick={startEditing}
+                className="px-3 py-1.5 text-sm border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                Yeniden Adlandır
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
+              >
+                Sil
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Kanban Board Bileşeni */}
         <ProjectBoard projectId={projectId} />
       </div>
     </main>

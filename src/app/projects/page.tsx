@@ -217,7 +217,7 @@ function ProjectList({ orgId }: { orgId: string }) {
       {projects.map((project) => (
         <Link
           key={project.id}
-          href={`/projects/${project.id}`}
+          href={`/projects/${project.id}?orgId=${orgId}`}
           className="block p-5 bg-white rounded-lg shadow border border-gray-100 hover:shadow-md transition"
         >
           <h2 className="font-semibold text-slate-800">{project.name}</h2>
