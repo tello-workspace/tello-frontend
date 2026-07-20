@@ -1,6 +1,20 @@
 // src/features/board/services/boardService.ts
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+function extractData<T>(response: { success: boolean; data: T }): T {
+  if (!response.success) throw new Error('API hatası');
+  return response.data;
+}
 
 export interface Task {
   id: string;
@@ -8,124 +22,101 @@ export interface Task {
   description?: string;
   dueDate?: string;
   columnId: string;
-  assignee?: string;
-  assigneeAvatar?: string;
+  assignee?: string | null;
+  assigneeAvatar?: string | null;
 }
 
-const fallbackBoardData = {
-  columns: {
-    todo: { id: 'todo', title: 'To Do', wipLimit: 3, taskIds: ['task-1', 'task-2'] },
-    in_progress: { id: 'in_progress', title: 'In Progress', wipLimit: 2, taskIds: ['task-3'] },
-    done: { id: 'done', title: 'Done', taskIds: [] },
-  },
-  tasks: {
-    'task-1': { 
-      id: 'task-1', 
-      title: 'Proje iskeletini kur', 
-      description: 'Next.js ve Tailwind ayarla', 
-      columnId: 'todo',
-      assignee: 'Ahmet Y.',
-      assigneeAvatar: 'AY'
-    },
-    'task-2': { 
-      id: 'task-2', 
-      title: 'Veritabanı bağlantısı', 
-      description: 'Prisma şemasını oluştur', 
-      columnId: 'todo',
-      assignee: 'Zeynep K.',
-      assigneeAvatar: 'ZK'
-    },
-    'task-3': { 
-      id: 'task-3', 
-      title: 'Kanban bileşenleri', 
-      description: 'dnd-kit entegrasyonu', 
-      columnId: 'in_progress',
-      assignee: 'Ahmet Y.',
-      assigneeAvatar: 'AY'
-    },
-  },
-};
+interface Column {
+  id: string;
+  title: string;
+  wipLimit: number | null;
+  taskIds: string[];
+}
+
+interface BoardData {
+  columns: Record<string, Column>;
+  tasks: Record<string, Task>;
+}
 
 export const boardService = {
-  async getBoardData(projectId: string) {
+  async getBoardData(projectId: string): Promise<BoardData | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/board`, {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/board`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
       });
-      
-      if (!response.ok) {
+      if (!res.ok) {
         console.warn("Backend'e ulaşılamadı, yerel veriler kullanılıyor.");
-        return fallbackBoardData;
+        return null;
       }
-      
-      return await response.json();
+      const json = await res.json();
+      return extractData(json);
     } catch (error) {
-      console.warn("Ağ hatası: Backend çalışmıyor olabilir. Yedek veriye dönülüyor.", error);
-      return fallbackBoardData;
+      console.warn("Ağ hatası: Backend çalışmıyor olabilir.", error);
+      return null;
     }
   },
 
-  async createTask(projectId: string, columnId: string, title: string): Promise<Task> {
+  async createTask(projectId: string, columnId: string, title: string): Promise<Task | null> {
     try {
-      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks`, {
+      const res = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ columnId, title }),
       });
-      if (!response.ok) throw new Error('Kart oluşturulamadı.');
-      return await response.json();
+      if (!res.ok) throw new Error('Kart oluşturulamadı.');
+      const json = await res.json();
+      return extractData(json);
     } catch {
-      return { 
-        id: `task-${Date.now()}`, 
-        title, 
-        columnId, 
-        description: '', 
-        dueDate: '',
-        assignee: '',
-        assigneeAvatar: ''
-      };
+      return null;
     }
   },
 
   async moveTask(projectId: string, taskId: string, targetColumnId: string) {
     try {
-      const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/move`, {
+      const res = await fetch(`${API_BASE_URL}/cards/${taskId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId, targetColumnId }),
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ columnId: targetColumnId }),
       });
-      if (!response.ok) throw new Error('Kart taşınamadı.');
-      return await response.json();
+      if (!res.ok) throw new Error('Kart taşınamadı.');
+      return await res.json();
     } catch {
       return { success: true };
     }
   },
 
   async getTaskDetails(projectId: string, taskId: string): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/${taskId}`, {
+    const res = await fetch(`${API_BASE_URL}/cards/${taskId}`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Görev detayları yüklenemedi.');
-    return response.json();
+    if (!res.ok) throw new Error('Görev detayları yüklenemedi.');
+    const json = await res.json();
+    return extractData(json);
   },
 
   async updateTask(projectId: string, task: Task): Promise<Task> {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/${task.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(task),
+    const res = await fetch(`${API_BASE_URL}/cards/${task.id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate || null,
+        columnId: task.columnId,
+      }),
     });
-    if (!response.ok) throw new Error('Görev güncellenemedi.');
-    return response.json();
+    if (!res.ok) throw new Error('Görev güncellenemedi.');
+    const json = await res.json();
+    return extractData(json);
   },
 
   async deleteTask(projectId: string, taskId: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/${taskId}`, {
+    const res = await fetch(`${API_BASE_URL}/cards/${taskId}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
     });
-    if (!response.ok) throw new Error('Görev silinemedi.');
+    if (!res.ok) throw new Error('Görev silinemedi.');
   },
 };
