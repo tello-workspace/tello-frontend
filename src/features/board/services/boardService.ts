@@ -1,6 +1,6 @@
 // src/features/board/services/boardService.ts
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 function getAuthHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -26,14 +26,14 @@ export interface Task {
   assigneeAvatar?: string | null;
 }
 
-interface Column {
+export interface Column {
   id: string;
   title: string;
   wipLimit: number | null;
   taskIds: string[];
 }
 
-interface BoardData {
+export interface BoardData {
   columns: Record<string, Column>;
   tasks: Record<string, Task>;
 }

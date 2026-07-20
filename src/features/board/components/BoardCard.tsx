@@ -58,7 +58,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({ task, onClick }) => {
         {task.assigneeAvatar ? (
           <div 
             className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-semibold text-[10px]"
-            title={task.assignee}
+            title={task.assignee ?? undefined}
           >
             {task.assigneeAvatar}
           </div>

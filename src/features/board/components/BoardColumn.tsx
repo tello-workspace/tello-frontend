@@ -9,7 +9,7 @@ interface BoardColumnProps {
   id: string;
   title: string;
   tasks: Task[];
-  wipLimit?: number;
+  wipLimit?: number | null;
   onAddTask: (columnId: string, title: string) => void;
   onTaskClick: (taskId: string) => void;
 }
@@ -34,7 +34,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
     setIsAdding(false);
   };
 
-  const isLimitExceeded = wipLimit !== undefined && tasks.length >= wipLimit;
+  const isLimitExceeded = wipLimit !== undefined && wipLimit !== null && tasks.length >= wipLimit;
 
   return (
     <div 

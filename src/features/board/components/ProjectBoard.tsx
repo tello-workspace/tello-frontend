@@ -11,20 +11,8 @@ import {
   useSensors 
 } from '@dnd-kit/core';
 import { BoardColumn } from './BoardColumn';
-import { boardService, Task } from '../services/boardService';
+import { boardService, Task, BoardData } from '../services/boardService';
 import { TaskModal } from '@/components/ui/TaskModal';
-
-interface Column {
-  id: string;
-  title: string;
-  wipLimit?: number;
-  taskIds: string[];
-}
-
-interface BoardData {
-  columns: Record<string, Column>;
-  tasks: Record<string, Task>;
-}
 
 interface ProjectBoardProps {
   projectId: string;
@@ -116,6 +104,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId }) => {
   const handleAddTask = async (columnId: string, title: string) => {
     try {
       const newTask = await boardService.createTask(projectId, columnId, title);
+      if (!newTask) return;
 
       setBoardData((prev) => {
         if (!prev) return prev;

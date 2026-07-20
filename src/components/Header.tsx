@@ -1,5 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation'
+import Link from 'next/link';
 import { useDispatch } from 'react-redux';
 import { api } from '@/lib/api';
 import { useGetMeQuery } from '@/features/auth/meApi';
@@ -16,9 +17,9 @@ export default function Header(){
     };
     return (
         <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
-            <span className='text-lg font-bold text-slate-800'>
+            <Link href="/projects" className="text-lg font-bold text-slate-800 hover:text-indigo-600 transition">
               {me ? `Hoşgeldin, ${me.name}` : 'Tello'}
-            </span>
+            </Link>
             <button
             onClick={handleLogout}
                 className="text-sm font-medium text-red-600 hover:text-red-700"

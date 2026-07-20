@@ -21,7 +21,15 @@ export const organizationsApi = api.injectEndpoints({
       transformResponse: (response: OrgsResponse) => response.data,
       providesTags: ['Project'],
     }),
+    addMember: builder.mutation<{ id: string }, { orgId: string; email: string; role?: 'ADMIN' | 'MEMBER' }>({
+      query: ({ orgId, ...body }) => ({
+        url: `/organizations/${orgId}/members`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Project'],
+    }),
   }),
 });
 
-export const { useGetMyOrganizationsQuery } = organizationsApi;
+export const { useGetMyOrganizationsQuery, useAddMemberMutation } = organizationsApi;

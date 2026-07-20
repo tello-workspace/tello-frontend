@@ -1,6 +1,6 @@
 'use client';
 
-import { useGetMyOrganizationsQuery } from '@/features/organizations/organizationsApi';
+import { useGetMyOrganizationsQuery, useAddMemberMutation } from '@/features/organizations/organizationsApi';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -117,6 +117,25 @@ function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: num
   const [activeOrgId, setActiveOrgId] = useState(orgs[0]?.id);
   const activeOrg = orgs.find((o) => o.id === activeOrgId) || orgs[0];
 
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteMsg, setInviteMsg] = useState('');
+  const [addMember, { isLoading: isInviting }] = useAddMemberMutation();
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviteMsg('');
+    try {
+      await addMember({ orgId: activeOrg.id, email: inviteEmail }).unwrap();
+      setInviteMsg('Davet edildi!');
+      setInviteEmail('');
+      setTimeout(() => setShowInvite(false), 1200);
+    } catch (err: any) {
+      const errData = err?.data?.error;
+      setInviteMsg(typeof errData === 'string' ? errData : errData?.message || 'Davet edilemedi.');
+    }
+  };
+
   return (
     <>
       <div className="flex items-center justify-between mb-6">
@@ -135,15 +154,45 @@ function OrgTabs({ orgs }: { orgs: { id: string; name: string; projectCount: num
             </button>
           ))}
         </div>
-       <Link
-  href={`/projects/new?orgId=${activeOrg.id}`}
-  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
->
-  + Yeni Proje
-</Link>
 
-        
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowInvite((v) => !v)}
+            className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded-md hover:bg-indigo-50 text-sm"
+          >
+            + Üye Davet Et
+          </button>
+          <Link
+            href={`/projects/new?orgId=${activeOrg.id}`}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+          >
+            + Yeni Proje
+          </Link>
+        </div>
       </div>
+
+      {showInvite && (
+        <form onSubmit={handleInvite} className="mb-6 flex gap-2 items-start">
+          <div className="flex-1">
+            <input
+              type="email"
+              placeholder="Davet edilecek kullanıcının email'i"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-indigo-200 text-slate-900 text-sm"
+              required
+            />
+            {inviteMsg && <p className="mt-1 text-xs text-slate-500">{inviteMsg}</p>}
+          </div>
+          <button
+            type="submit"
+            disabled={isInviting}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm disabled:opacity-50"
+          >
+            {isInviting ? '...' : 'Davet Et'}
+          </button>
+        </form>
+      )}
 
       <ProjectList orgId={activeOrg.id} />
     </>
@@ -158,8 +207,7 @@ function ProjectList({ orgId }: { orgId: string }) {
   if (!projects || projects.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-500 mb-4">Henüz proje yok.</p>
-        
+        <p className="text-slate-500">Henüz proje yok. Üstteki &quot;+ Yeni Proje&quot; ile ilk projeni oluştur.</p>
       </div>
     );
   }
