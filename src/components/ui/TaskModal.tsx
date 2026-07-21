@@ -3,15 +3,25 @@
 
 import React, { Fragment, useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon, CalendarDaysIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Task } from '@/features/board/services/boardService';
+import { XMarkIcon, CalendarDaysIcon, TrashIcon, TagIcon } from '@heroicons/react/24/outline';
+import { Task, TaskLabel } from '@/features/board/services/boardService';
 import { useGetOrganizationByIdQuery } from '@/features/organizations/organizationsApi';
+import {
+  useGetLabelsQuery,
+  useCreateLabelMutation,
+  useAttachLabelMutation,
+  useDetachLabelMutation,
+} from '@/features/labels/labelsApi';
+import { toast } from 'react-toastify';
+
+const NEW_LABEL_COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
 
 interface TaskModalProps {
   taskId: string | null;
   isOpen: boolean;
   onClose: () => void;
   orgId: string;
+  projectId: string;
   onUpdateTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
   fetchTaskDetails: (taskId: string) => Promise<Task>;
@@ -22,16 +32,28 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   isOpen,
   onClose,
   orgId,
+  projectId,
   onUpdateTask,
   onDeleteTask,
   fetchTaskDetails,
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showLabelPicker, setShowLabelPicker] = useState(false);
+  const [newLabelName, setNewLabelName] = useState('');
+  const [newLabelColor, setNewLabelColor] = useState(NEW_LABEL_COLORS[0]);
 
   const { data: org } = useGetOrganizationByIdQuery({ orgId }, { skip: !orgId || !isOpen });
   const members = org?.members ?? [];
   const isAdmin = org?.myRole === 'ADMIN';
+
+  const { data: availableLabels = [] } = useGetLabelsQuery(
+    { orgId, projectId },
+    { skip: !orgId || !projectId || !isOpen },
+  );
+  const [createLabel, { isLoading: isCreatingLabel }] = useCreateLabelMutation();
+  const [attachLabel] = useAttachLabelMutation();
+  const [detachLabel] = useDetachLabelMutation();
 
   useEffect(() => {
     if (taskId && isOpen) {
@@ -71,6 +93,44 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     if (task) {
       onUpdateTask(task);
       onClose();
+    }
+  };
+
+  const handleAttachLabel = async (label: TaskLabel) => {
+    if (!task) return;
+    try {
+      await attachLabel({ cardId: task.id, labelId: label.id }).unwrap();
+      setTask({ ...task, labels: [...(task.labels ?? []), label] });
+      setShowLabelPicker(false);
+    } catch {
+      toast.error('Etiket eklenemedi.');
+    }
+  };
+
+  const handleDetachLabel = async (labelId: string) => {
+    if (!task) return;
+    try {
+      await detachLabel({ cardId: task.id, labelId }).unwrap();
+      setTask({ ...task, labels: (task.labels ?? []).filter((l) => l.id !== labelId) });
+    } catch {
+      toast.error('Etiket kaldırılamadı.');
+    }
+  };
+
+  const handleCreateLabel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!task || !newLabelName.trim()) return;
+    try {
+      const label = await createLabel({
+        orgId,
+        projectId,
+        name: newLabelName.trim(),
+        color: newLabelColor,
+      }).unwrap();
+      await handleAttachLabel(label);
+      setNewLabelName('');
+    } catch {
+      toast.error('Etiket oluşturulamadı.');
     }
   };
 
@@ -135,6 +195,96 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     </div>
 
                     <div className="mt-4 space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+                          Etiketler
+                        </label>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {(task.labels ?? []).map((label) => (
+                            <span
+                              key={label.id}
+                              className="flex items-center gap-1 pl-2 pr-1 py-0.5 rounded text-xs font-medium text-white"
+                              style={{ backgroundColor: label.color }}
+                            >
+                              {label.name}
+                              <button
+                                type="button"
+                                onClick={() => handleDetachLabel(label.id)}
+                                className="hover:bg-black/20 rounded p-0.5"
+                                aria-label={`${label.name} etiketini kaldır`}
+                              >
+                                <XMarkIcon className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setShowLabelPicker((v) => !v)}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-zinc-500 dark:text-zinc-400 border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-400"
+                            >
+                              <TagIcon className="h-3 w-3" />
+                              Etiket
+                            </button>
+
+                            {showLabelPicker && (
+                              <div className="absolute z-10 mt-2 w-56 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg p-2">
+                                <div className="max-h-32 overflow-y-auto space-y-1 mb-2">
+                                  {availableLabels
+                                    .filter((l) => !(task.labels ?? []).some((tl) => tl.id === l.id))
+                                    .map((label) => (
+                                      <button
+                                        key={label.id}
+                                        type="button"
+                                        onClick={() => handleAttachLabel(label)}
+                                        className="flex items-center gap-2 w-full px-2 py-1 rounded text-xs text-left hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                      >
+                                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: label.color }} />
+                                        <span className="text-zinc-700 dark:text-zinc-200">{label.name}</span>
+                                      </button>
+                                    ))}
+                                  {availableLabels.length === 0 && (
+                                    <p className="text-xs text-zinc-400 px-2 py-1">Henüz etiket yok.</p>
+                                  )}
+                                </div>
+
+                                <form onSubmit={handleCreateLabel} className="border-t border-zinc-100 dark:border-zinc-800 pt-2 space-y-1.5">
+                                  <input
+                                    type="text"
+                                    value={newLabelName}
+                                    onChange={(e) => setNewLabelName(e.target.value)}
+                                    placeholder="Yeni etiket adı"
+                                    className="w-full text-xs px-2 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100"
+                                  />
+                                  <div className="flex items-center justify-between gap-1">
+                                    <div className="flex gap-1">
+                                      {NEW_LABEL_COLORS.map((color) => (
+                                        <button
+                                          key={color}
+                                          type="button"
+                                          onClick={() => setNewLabelColor(color)}
+                                          className={`w-4 h-4 rounded-full ${newLabelColor === color ? 'ring-2 ring-offset-1 ring-zinc-400' : ''}`}
+                                          style={{ backgroundColor: color }}
+                                          aria-label={color}
+                                        />
+                                      ))}
+                                    </div>
+                                    <button
+                                      type="submit"
+                                      disabled={isCreatingLabel || !newLabelName.trim()}
+                                      className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-50"
+                                    >
+                                      Oluştur
+                                    </button>
+                                  </div>
+                                </form>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
                       <div>
                         <label htmlFor="description" className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
                           Açıklama

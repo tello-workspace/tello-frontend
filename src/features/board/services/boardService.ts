@@ -16,6 +16,12 @@ function extractData<T>(response: { success: boolean; data: T }): T {
   return response.data;
 }
 
+export interface TaskLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -25,11 +31,12 @@ export interface Task {
   assigneeId?: string | null;
   assignee?: string | null;
   assigneeAvatar?: string | null;
+  labels?: TaskLabel[];
 }
 
-// Backend /cards/:id (GET, PATCH) assignee'yi obje olarak dondurur
-// ({id, name, email}) — board endpoint'i ise duz string. Task tipini
-// tek tip (string) tutmak icin burada normalize ediyoruz.
+// Backend /cards/:id (GET, PATCH) assignee'yi obje, labels'i da nested
+// CardLabel[] olarak dondurur - board endpoint'i ikisini de duz/basitlestirilmis
+// dondurur. Task tipini tek tip tutmak icin burada normalize ediyoruz.
 interface RawCard {
   id: string;
   title: string;
@@ -38,6 +45,7 @@ interface RawCard {
   columnId: string;
   assigneeId?: string | null;
   assignee?: { id: string; name: string; email: string } | null;
+  labels?: { label: { id: string; name: string; color: string } }[];
 }
 
 function normalizeCard(raw: RawCard): Task {
@@ -52,6 +60,7 @@ function normalizeCard(raw: RawCard): Task {
     assigneeAvatar: raw.assignee?.name
       ? raw.assignee.name.split(' ').map((n) => n[0]).join('').toUpperCase()
       : null,
+    labels: raw.labels?.map((cl) => cl.label) ?? [],
   };
 }
 

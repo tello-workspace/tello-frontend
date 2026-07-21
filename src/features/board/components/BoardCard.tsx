@@ -35,6 +35,20 @@ export const BoardCard: React.FC<BoardCardProps> = ({ task, onClick }) => {
       onClick={onClick}
       className="bg-white dark:bg-zinc-950 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition group"
     >
+      {task.labels && task.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {task.labels.map((label) => (
+            <span
+              key={label.id}
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white"
+              style={{ backgroundColor: label.color }}
+            >
+              {label.name}
+            </span>
+          ))}
+        </div>
+      )}
+
       <h4 className="text-sm font-medium text-zinc-800 dark:text-zinc-100 mb-1">
         {task.title}
       </h4>

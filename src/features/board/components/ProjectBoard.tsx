@@ -228,6 +228,7 @@ export const ProjectBoard: React.FC<ProjectBoardProps> = ({ projectId, orgId }) 
         onClose={() => setIsModalOpen(false)}
         taskId={selectedTaskId}
         orgId={orgId}
+        projectId={projectId}
         fetchTaskDetails={(id) => boardService.getTaskDetails(projectId, id)}
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
