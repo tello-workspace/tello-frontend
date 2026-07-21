@@ -6,15 +6,168 @@ import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, CalendarDaysIcon, TrashIcon, TagIcon } from '@heroicons/react/24/outline';
 import { Task, TaskLabel } from '@/features/board/services/boardService';
 import { useGetOrganizationByIdQuery } from '@/features/organizations/organizationsApi';
+import { useGetMeQuery } from '@/features/auth/meApi';
 import {
   useGetLabelsQuery,
   useCreateLabelMutation,
   useAttachLabelMutation,
   useDetachLabelMutation,
 } from '@/features/labels/labelsApi';
+import {
+  useGetCommentsQuery,
+  useCreateCommentMutation,
+  useUpdateCommentMutation,
+  useDeleteCommentMutation,
+} from '@/features/comments/commentsApi';
 import { toast } from 'react-toastify';
 
 const NEW_LABEL_COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
+
+function timeAgo(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'az önce';
+  if (mins < 60) return `${mins} dk önce`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} sa önce`;
+  const days = Math.floor(hours / 24);
+  return `${days} gün önce`;
+}
+
+const CommentsSection: React.FC<{ cardId: string }> = ({ cardId }) => {
+  const { data: me } = useGetMeQuery();
+  const { data: comments = [] } = useGetCommentsQuery(cardId);
+  const [createComment, { isLoading: isPosting }] = useCreateCommentMutation();
+  const [updateComment] = useUpdateCommentMutation();
+  const [deleteComment] = useDeleteCommentMutation();
+
+  const [newText, setNewText] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
+  const handlePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newText.trim()) return;
+    try {
+      await createComment({ cardId, text: newText.trim() }).unwrap();
+      setNewText('');
+    } catch {
+      toast.error('Yorum eklenemedi.');
+    }
+  };
+
+  const startEditing = (commentId: string, text: string) => {
+    setEditingId(commentId);
+    setEditText(text);
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    if (!editText.trim()) return;
+    try {
+      await updateComment({ commentId, cardId, text: editText.trim() }).unwrap();
+      setEditingId(null);
+    } catch {
+      toast.error('Yorum güncellenemedi.');
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!window.confirm('Bu yorumu silmek istediğinizden emin misiniz?')) return;
+    try {
+      await deleteComment({ commentId, cardId }).unwrap();
+    } catch {
+      toast.error('Yorum silinemedi.');
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1.5">
+        Yorumlar {comments.length > 0 && `(${comments.length})`}
+      </label>
+
+      <div className="space-y-3 max-h-56 overflow-y-auto mb-3 pr-1">
+        {comments.length === 0 && (
+          <p className="text-xs text-zinc-400">Henüz yorum yok.</p>
+        )}
+        {comments.map((c) => (
+          <div key={c.id} className="text-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-zinc-700 dark:text-zinc-200 text-xs">{c.author.name}</span>
+              <span className="text-xs text-zinc-400">{timeAgo(c.createdAt)}</span>
+            </div>
+
+            {editingId === c.id ? (
+              <div className="mt-1 space-y-1">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  rows={2}
+                  className="w-full text-sm p-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveEdit(c.id)}
+                    className="text-xs font-medium text-blue-600 hover:underline"
+                  >
+                    Kaydet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingId(null)}
+                    className="text-xs text-zinc-500 hover:underline"
+                  >
+                    İptal
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start justify-between gap-2 mt-0.5">
+                <p className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">{c.text}</p>
+                {c.authorId === me?.id && (
+                  <div className="flex gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => startEditing(c.id, c.text)}
+                      className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                    >
+                      Düzenle
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(c.id)}
+                      className="text-xs text-zinc-400 hover:text-red-500"
+                    >
+                      Sil
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <form onSubmit={handlePost} className="flex gap-2">
+        <input
+          type="text"
+          value={newText}
+          onChange={(e) => setNewText(e.target.value)}
+          placeholder="Bir yorum yaz..."
+          className="flex-1 text-sm px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <button
+          type="submit"
+          disabled={isPosting || !newText.trim()}
+          className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+        >
+          Gönder
+        </button>
+      </form>
+    </div>
+  );
+};
 
 interface TaskModalProps {
   taskId: string | null;
@@ -342,6 +495,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                         </div>
                       </div>
                       
+                      <CommentsSection cardId={task.id} />
+
                       <p className="text-xs text-zinc-500 dark:text-zinc-600 font-mono">
                           ID: {task.id} | Sütun: {task.columnId}
                       </p>
