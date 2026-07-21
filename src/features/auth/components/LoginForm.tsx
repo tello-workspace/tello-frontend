@@ -30,6 +30,10 @@ export default function LoginForm() {
   const router = useRouter();
 
   const handleGoogleLogin = async () => {
+    if (!supabase) {
+      toast.error('Google girişi için Supabase ayarları eksik.');
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },

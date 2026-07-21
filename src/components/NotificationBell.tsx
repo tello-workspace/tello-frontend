@@ -44,7 +44,7 @@ export default function NotificationBell() {
     const socket = getSocket();
     if (!socket) return;
 
-    const refresh = () => dispatch(api.util.invalidateTags(['Notification']));
+    const refresh = () => dispatch(api.util.invalidateTags(['Notification', 'Project', 'Card']));
 
     const handleNew = (notification: { message?: string }) => {
       refresh();
@@ -54,11 +54,23 @@ export default function NotificationBell() {
     socket.on('notification:new', handleNew);
     socket.on('notification:read', refresh);
     socket.on('notification:all_read', refresh);
+    socket.on('org:member_added', refresh);
+    socket.on('org:member_removed', refresh);
+    socket.on('org:member_role_changed', refresh);
+    socket.on('project:created', refresh);
+    socket.on('project:updated', refresh);
+    socket.on('project:deleted', refresh);
 
     return () => {
       socket.off('notification:new', handleNew);
       socket.off('notification:read', refresh);
       socket.off('notification:all_read', refresh);
+      socket.off('org:member_added', refresh);
+      socket.off('org:member_removed', refresh);
+      socket.off('org:member_role_changed', refresh);
+      socket.off('project:created', refresh);
+      socket.off('project:updated', refresh);
+      socket.off('project:deleted', refresh);
     };
   }, [dispatch]);
 

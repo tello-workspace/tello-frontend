@@ -17,6 +17,10 @@ export default function RegisterForm() {
   const router = useRouter();
 
   const handleGoogleRegister = async () => {
+    if (!supabase) {
+      toast.error('Google girişi için Supabase ayarları eksik.');
+      return;
+    }
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },

@@ -14,6 +14,10 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const syncSession = async () => {
+      if (!supabase) {
+        setErrorMsg('Google ile giriş tamamlanamadı (Supabase eksik).');
+        return;
+      }
       const { data, error } = await supabase.auth.getSession();
       const accessToken = data.session?.access_token;
 

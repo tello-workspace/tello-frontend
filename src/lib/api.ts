@@ -17,7 +17,11 @@ const baseQueryWithLogout = async (args: string | FetchArgs, api: BaseQueryApi, 
 
   // 401 → token geçersiz/süresi dolmuş → logout + full reload (store sıfırlanır)
   if (result.error && 'status' in result.error && result.error.status === 401) {
-    if (typeof window !== 'undefined') {
+    if (
+      typeof window !== 'undefined' &&
+      window.location.pathname !== '/login' &&
+      window.location.pathname !== '/register'
+    ) {
       localStorage.removeItem('token')
       window.location.href = '/login'
     }
