@@ -1,0 +1,65 @@
+// src/app/auth/callback/page.tsx
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'react-toastify';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
+export default function AuthCallbackPage() {
+  const router = useRouter();
+  const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    const syncSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+
+      if (error || !accessToken) {
+        setErrorMsg('Google ile giriş tamamlanamadı.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/oauth`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken }),
+        });
+        const json = await res.json();
+
+        if (!res.ok || !json.success) {
+          throw new Error(json.error?.message || 'Giriş yapılamadı.');
+        }
+
+        localStorage.setItem('token', json.data.token);
+        toast.success('Giriş yapıldı!');
+        router.push('/projects');
+      } catch {
+        setErrorMsg('Giriş yapılamadı. Lütfen tekrar deneyin.');
+      }
+    };
+
+    syncSession();
+  }, [router]);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+      {errorMsg ? (
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{errorMsg}</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="text-indigo-600 hover:underline"
+          >
+            Giriş sayfasına dön
+          </button>
+        </div>
+      ) : (
+        <p className="text-gray-500">Giriş yapılıyor...</p>
+      )}
+    </div>
+  );
+}
