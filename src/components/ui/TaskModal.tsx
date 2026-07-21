@@ -195,6 +195,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [showLabelPicker, setShowLabelPicker] = useState(false);
   const [newLabelName, setNewLabelName] = useState('');
   const [newLabelColor, setNewLabelColor] = useState(NEW_LABEL_COLORS[0]);
+  const [showAssigneePicker, setShowAssigneePicker] = useState(false);
 
   const { data: org } = useGetOrganizationByIdQuery({ orgId }, { skip: !orgId || !isOpen });
   const members = org?.members ?? [];
@@ -226,20 +227,19 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     setTask({ ...task, [name]: value });
   };
 
-  const handleAssigneeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleToggleAssignee = (userId: string) => {
     if (!task) return;
-    const userId = e.target.value;
+    const current = task.assignees ?? [];
+    const isAssigned = current.some((a) => a.id === userId);
+
+    if (isAssigned) {
+      setTask({ ...task, assignees: current.filter((a) => a.id !== userId) });
+      return;
+    }
+
     const member = members.find((m) => m.userId === userId);
-    const displayName = member?.user.name ?? '';
-    const avatar = displayName
-      ? displayName.split(' ').map((n) => n[0]).join('').toUpperCase()
-      : '';
-    setTask({
-      ...task,
-      assigneeId: userId || null,
-      assignee: displayName,
-      assigneeAvatar: avatar,
-    });
+    if (!member) return;
+    setTask({ ...task, assignees: [...current, { id: userId, name: member.user.name }] });
   };
 
   const handleSave = () => {
@@ -470,25 +470,68 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                         </div>
 
                         <div>
-                          <label htmlFor="assignee" className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
-                            Atanan Kişi
+                          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                            Atanan Kişiler
                           </label>
-                          <select
-                            id="assignee"
-                            name="assigneeId"
-                            value={task.assigneeId || ''}
-                            onChange={handleAssigneeChange}
-                            disabled={!isAdmin}
-                            title={isAdmin ? undefined : 'Sadece adminler atama yapabilir'}
-                            className="w-full text-sm p-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed"
-                          >
-                            <option value="">Atanan Yok</option>
-                            {members.map((m) => (
-                              <option key={m.userId} value={m.userId}>
-                                {m.user.name}
-                              </option>
+
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {(task.assignees ?? []).map((a) => (
+                              <span
+                                key={a.id}
+                                className="flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+                              >
+                                {a.name}
+                                {isAdmin && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAssignee(a.id)}
+                                    className="hover:bg-black/10 rounded p-0.5"
+                                    aria-label={`${a.name} atamasını kaldır`}
+                                  >
+                                    <XMarkIcon className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </span>
                             ))}
-                          </select>
+
+                            {isAdmin && (
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAssigneePicker((v) => !v)}
+                                  className="px-2 py-0.5 rounded-full text-xs font-medium text-zinc-500 dark:text-zinc-400 border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-400"
+                                >
+                                  + Kişi
+                                </button>
+
+                                {showAssigneePicker && (
+                                  <div className="absolute z-10 mt-2 w-48 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg p-2 max-h-40 overflow-y-auto">
+                                    {members.map((m) => {
+                                      const checked = (task.assignees ?? []).some((a) => a.id === m.userId);
+                                      return (
+                                        <label
+                                          key={m.userId}
+                                          className="flex items-center gap-2 px-2 py-1 rounded text-xs cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={() => handleToggleAssignee(m.userId)}
+                                            className="rounded"
+                                          />
+                                          <span className="text-zinc-700 dark:text-zinc-200">{m.user.name}</span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {!isAdmin && (task.assignees ?? []).length === 0 && (
+                            <p className="text-xs text-zinc-400 mt-1">Atanan yok</p>
+                          )}
                           {!isAdmin && (
                             <p className="text-xs text-zinc-400 mt-1">Sadece adminler atama yapabilir</p>
                           )}

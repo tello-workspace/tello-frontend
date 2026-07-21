@@ -10,6 +10,12 @@ interface BoardCardProps {
   onClick: () => void;
 }
 
+function initials(name: string): string {
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase();
+}
+
+const MAX_VISIBLE_ASSIGNEES = 3;
+
 export const BoardCard: React.FC<BoardCardProps> = ({ task, onClick }) => {
   const {
     attributes,
@@ -69,12 +75,22 @@ export const BoardCard: React.FC<BoardCardProps> = ({ task, onClick }) => {
           )}
         </div>
 
-        {task.assigneeAvatar ? (
-          <div 
-            className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-semibold text-[10px]"
-            title={task.assignee ?? undefined}
-          >
-            {task.assigneeAvatar}
+        {task.assignees && task.assignees.length > 0 ? (
+          <div className="flex items-center -space-x-1.5">
+            {task.assignees.slice(0, MAX_VISIBLE_ASSIGNEES).map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-semibold text-[10px] border-2 border-white dark:border-zinc-950"
+                title={a.name}
+              >
+                {initials(a.name)}
+              </div>
+            ))}
+            {task.assignees.length > MAX_VISIBLE_ASSIGNEES && (
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-semibold text-[9px] border-2 border-white dark:border-zinc-950">
+                +{task.assignees.length - MAX_VISIBLE_ASSIGNEES}
+              </div>
+            )}
           </div>
         ) : (
           <UserIcon className="h-3.5 w-3.5 text-zinc-400" />

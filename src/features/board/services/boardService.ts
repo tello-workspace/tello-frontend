@@ -22,19 +22,22 @@ export interface TaskLabel {
   color: string;
 }
 
+export interface TaskAssignee {
+  id: string;
+  name: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
   dueDate?: string;
   columnId: string;
-  assigneeId?: string | null;
-  assignee?: string | null;
-  assigneeAvatar?: string | null;
+  assignees?: TaskAssignee[];
   labels?: TaskLabel[];
 }
 
-// Backend /cards/:id (GET, PATCH) assignee'yi obje, labels'i da nested
+// Backend /cards/:id (GET, PATCH) assignees/labels'i nested CardAssignee[]/
 // CardLabel[] olarak dondurur - board endpoint'i ikisini de duz/basitlestirilmis
 // dondurur. Task tipini tek tip tutmak icin burada normalize ediyoruz.
 interface RawCard {
@@ -43,8 +46,7 @@ interface RawCard {
   description?: string | null;
   dueDate?: string | null;
   columnId: string;
-  assigneeId?: string | null;
-  assignee?: { id: string; name: string; email: string } | null;
+  assignees?: { user: { id: string; name: string } }[];
   labels?: { label: { id: string; name: string; color: string } }[];
 }
 
@@ -55,11 +57,7 @@ function normalizeCard(raw: RawCard): Task {
     description: raw.description ?? undefined,
     dueDate: raw.dueDate ?? undefined,
     columnId: raw.columnId,
-    assigneeId: raw.assigneeId ?? null,
-    assignee: raw.assignee?.name ?? null,
-    assigneeAvatar: raw.assignee?.name
-      ? raw.assignee.name.split(' ').map((n) => n[0]).join('').toUpperCase()
-      : null,
+    assignees: raw.assignees?.map((a) => a.user) ?? [],
     labels: raw.labels?.map((cl) => cl.label) ?? [],
   };
 }
@@ -142,9 +140,9 @@ export const boardService = {
       dueDate: task.dueDate || null,
       columnId: task.columnId,
     };
-    // assigneeId varsa backend'e gönder, boş string ise null yap (atamayı kaldır)
-    if (task.assigneeId !== undefined) {
-      body.assigneeId = task.assigneeId || null;
+    // assignees varsa backend'e id listesi olarak gonder (tam liste ile degistirir)
+    if (task.assignees !== undefined) {
+      body.assigneeIds = task.assignees.map((a) => a.id);
     }
 
     const res = await fetch(`${API_BASE_URL}/cards/${task.id}`, {
