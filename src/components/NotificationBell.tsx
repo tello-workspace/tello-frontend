@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Popover } from '@headlessui/react';
 import { BellIcon } from '@heroicons/react/24/outline';
 import {
@@ -13,6 +15,9 @@ import {
   useDeclineInvitationMutation,
 } from '@/features/organizations/organizationsApi';
 import { toast } from 'react-toastify';
+import { api } from '@/lib/api';
+import type { AppDispatch } from '@/lib/store';
+import { getSocket } from '@/lib/socket';
 
 function timeAgo(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -26,12 +31,36 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function NotificationBell() {
+  const dispatch = useDispatch<AppDispatch>();
+  // Soket bagliyken anlik bildirim geliyor, bu yuzden polling sadece yedek (baglanti koparsa)
   const { data: unreadCount = 0 } = useGetUnreadCountQuery(undefined, { pollingInterval: 30000 });
   const { data: notifications = [] } = useGetNotificationsQuery();
   const [markAsRead] = useMarkAsReadMutation();
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [acceptInvitation] = useAcceptInvitationMutation();
   const [declineInvitation] = useDeclineInvitationMutation();
+
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const refresh = () => dispatch(api.util.invalidateTags(['Notification']));
+
+    const handleNew = (notification: { message?: string }) => {
+      refresh();
+      if (notification?.message) toast.info(notification.message);
+    };
+
+    socket.on('notification:new', handleNew);
+    socket.on('notification:read', refresh);
+    socket.on('notification:all_read', refresh);
+
+    return () => {
+      socket.off('notification:new', handleNew);
+      socket.off('notification:read', refresh);
+      socket.off('notification:all_read', refresh);
+    };
+  }, [dispatch]);
 
   const handleAccept = async (e: React.MouseEvent, invitationId: string) => {
     e.stopPropagation();
