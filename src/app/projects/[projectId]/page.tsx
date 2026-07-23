@@ -10,6 +10,8 @@ import {
 } from '@/features/projects/projectsApi';
 import { useGetOrganizationByIdQuery } from '@/features/organizations/organizationsApi';
 import { toast } from 'react-toastify';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -61,49 +63,38 @@ export default function ProjectDetailPage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6">
+    <main className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div>
             {isEditing ? (
               <form onSubmit={handleRename} className="flex items-center gap-2">
-                <input
+                <Input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded px-2 py-1"
+                  className="text-2xl font-bold h-auto py-1 px-2"
                   autoFocus
                 />
-                <button type="submit" disabled={isUpdating} className="text-sm text-blue-600 hover:underline">
-                  Kaydet
-                </button>
-                <button type="button" onClick={() => setIsEditing(false)} className="text-sm text-zinc-500 hover:underline">
-                  İptal
-                </button>
+                <Button type="submit" disabled={isUpdating} size="sm">Kaydet</Button>
+                <Button type="button" variant="ghost" onClick={() => setIsEditing(false)} size="sm">İptal</Button>
               </form>
             ) : (
-              <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              <h1 className="text-2xl font-bold text-foreground">
                 {project?.name ?? 'Proje Panosu'}
               </h1>
             )}
-            {errorMsg && <p className="text-xs text-red-500 mt-1">{errorMsg}</p>}
+            {errorMsg && <p className="text-xs text-destructive mt-1">{errorMsg}</p>}
           </div>
 
           {orgId && isAdmin && !isEditing && (
             <div className="flex gap-2">
-              <button
-                onClick={startEditing}
-                className="px-3 py-1.5 text-sm border border-zinc-300 dark:border-zinc-700 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              >
+              <Button variant="outline" size="sm" onClick={startEditing}>
                 Yeniden Adlandır
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 disabled:opacity-50"
-              >
+              </Button>
+              <Button variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
                 Sil
-              </button>
+              </Button>
             </div>
           )}
         </div>
