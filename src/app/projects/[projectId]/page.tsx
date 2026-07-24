@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { ProjectBoard } from '@/features/board/components/ProjectBoard';
+import { AIChatPanel } from '@/features/ai/AIChatPanel';
 import {
   useGetProjectByIdQuery,
   useUpdateProjectMutation,
@@ -12,6 +13,7 @@ import { useGetOrganizationByIdQuery } from '@/features/organizations/organizati
 import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Bot } from 'lucide-react';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -27,6 +29,7 @@ export default function ProjectDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
 
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
@@ -64,7 +67,7 @@ export default function ProjectDetailPage() {
 
   return (
     <main className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto max-w-full">
         <div className="mb-6 flex items-center justify-between">
           <div>
             {isEditing ? (
@@ -87,19 +90,56 @@ export default function ProjectDetailPage() {
             {errorMsg && <p className="text-xs text-destructive mt-1">{errorMsg}</p>}
           </div>
 
-          {orgId && isAdmin && !isEditing && (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={startEditing}>
-                Yeniden Adlandır
-              </Button>
-              <Button variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
-                Sil
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {orgId && isAdmin && !isEditing && (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={startEditing}>
+                  Yeniden Adlandır
+                </Button>
+                <Button variant="destructive" size="sm" disabled={isDeleting} onClick={handleDelete}>
+                  Sil
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <ProjectBoard projectId={projectId} orgId={orgId} />
+        {/* Board + AI Chat side-by-side */}
+        <div className="flex gap-0 sm:gap-4">
+          <div className="flex-1 min-w-0 lg:max-w-[calc(100%-24rem)]">
+            <ProjectBoard projectId={projectId} orgId={orgId} />
+          </div>
+
+          {/* AI Chat sidebar (desktop) */}
+          <div className="hidden sm:block shrink-0">
+            <div className="sticky top-6 h-[calc(100vh-8rem)] w-80 lg:w-96">
+              <AIChatPanel projectId={projectId} projectName={project?.name} />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile floating AI button */}
+        {!mobileChatOpen && (
+          <button
+            onClick={() => setMobileChatOpen(true)}
+            className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-lg hover:opacity-90 transition-all sm:hidden"
+          >
+            <Bot className="h-5 w-5" />
+            <span className="text-sm font-medium">AI Asistan</span>
+          </button>
+        )}
+
+        {/* Mobile AI chat overlay */}
+        {mobileChatOpen && (
+          <div className="fixed inset-0 z-50 sm:hidden">
+            <AIChatPanel
+              projectId={projectId}
+              projectName={project?.name}
+              isMobile={true}
+              onClose={() => setMobileChatOpen(false)}
+            />
+          </div>
+        )}
       </div>
     </main>
   );
